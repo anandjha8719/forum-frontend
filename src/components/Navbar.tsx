@@ -20,25 +20,15 @@ const Navbar = () => {
           </Link>
 
           <div className="flex space-x-4 items-center">
-            <Link to="/" className="text-white hover:text-indigo-200">
-              Home
-            </Link>
-
             {isAuthenticated() ? (
               <>
-                <Link
-                  to="/profile"
-                  className="text-white hover:text-indigo-200"
-                >
-                  Profile
-                </Link>
+                <div className="text-white">{user?.name || user?.email}</div>
                 <button
                   onClick={handleLogout}
-                  className="bg-white text-indigo-600 px-4 py-2 rounded-md hover:bg-indigo-100 transition"
+                  className="text-indigo-600 px-4 py-2 rounded-full hover:bg-white transition bg-white/90 cursor-pointer"
                 >
                   Logout
                 </button>
-                <div className="text-white">{user?.name || user?.email}</div>
               </>
             ) : (
               <>
