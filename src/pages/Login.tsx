@@ -19,6 +19,7 @@ const Login = () => {
     try {
       await login(email, password);
       navigate("/");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to login");
     } finally {

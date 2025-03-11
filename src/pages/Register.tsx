@@ -31,6 +31,7 @@ const Register = () => {
     try {
       await register(formData);
       navigate("/");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to register");
     } finally {
@@ -103,24 +104,6 @@ const Register = () => {
               value={formData.name}
               onChange={handleChange}
             />
-          </div>
-
-          <div className="mb-6">
-            <label
-              htmlFor="avatar"
-              className="block text-gray-700 text-sm font-bold mb-2"
-            >
-              Avatar URL (optional)
-            </label>
-            {/* <input
-              type="text"
-              id="avatar"
-              name="avatar"
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              value={formData.avatar}
-              onChange={handleChange}
-              placeholder="https://example.com/avatar.jpg"
-            /> */}
           </div>
 
           <div className="flex items-center justify-between">
