@@ -4,24 +4,8 @@ import api from "../services/api";
 import { UserContext } from "../context/UserContext";
 import ForumCard from "../components/ForumCard";
 import CreateForumModal from "../components/CreateForumModal";
-
-interface Forum {
-  id: string;
-  title: string;
-  description: string;
-  tags: string[];
-  createdAt: string;
-  authorId: string;
-  author: {
-    id: string;
-    name: string;
-    email: string;
-    avatar?: string;
-  };
-  _count?: {
-    comments: number;
-  };
-}
+import { Forum } from "../types";
+import { normalizeForum } from "../utils/normalizeForum";
 
 const Home = () => {
   const [forums, setForums] = useState<Forum[]>([]);
@@ -38,6 +22,7 @@ const Home = () => {
       const response = await api.get("/forums");
       setForums(response.data);
       setError("");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error("Error fetching forums:", err);
       setError("Failed to load forums. Please try again later.");
@@ -49,18 +34,6 @@ const Home = () => {
   useEffect(() => {
     fetchForums();
   }, []);
-
-  const normalizeForum = (forum: Forum): Forum => {
-    if (!forum._count) {
-      return {
-        ...forum,
-        _count: {
-          comments: 0,
-        },
-      };
-    }
-    return forum;
-  };
 
   const handleCreateForum = async (forum: {
     title: string;
@@ -74,6 +47,7 @@ const Home = () => {
       const normalizedForum = normalizeForum(response.data);
       setForums([normalizedForum, ...forums]);
       setShowCreateModal(false);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error("Error creating forum:", err);
       alert(err.response?.data?.message || "Failed to create forum");

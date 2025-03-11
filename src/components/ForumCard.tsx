@@ -1,9 +1,23 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { UserContext } from "../context/UserContext";
 import EditForumModal from "./EditForumModal";
+import CommentSection from "./CommentSection";
 import api from "../services/api";
+
+interface Comment {
+  id: string;
+  content: string;
+  createdAt: string;
+  authorId: string;
+  author: {
+    id: string;
+    name: string;
+    email: string;
+    avatar?: string;
+  };
+}
 
 interface ForumCardProps {
   forum: {
@@ -23,6 +37,7 @@ interface ForumCardProps {
       comments: number;
     };
   };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onForumUpdate: (updatedForum: any) => void;
   onForumDelete: (forumId: string) => void;
 }
@@ -30,6 +45,9 @@ interface ForumCardProps {
 const ForumCard = ({ forum, onForumUpdate, onForumDelete }: ForumCardProps) => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
+  const [commentsExpanded, setCommentsExpanded] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
   const { user } = useContext(UserContext);
 
   const timeAgo = formatDistanceToNow(new Date(forum.createdAt), {
@@ -41,6 +59,25 @@ const ForumCard = ({ forum, onForumUpdate, onForumDelete }: ForumCardProps) => {
 
   const isOwner = user?.id === forum.author.id;
 
+  useEffect(() => {
+    if (commentsExpanded && comments.length === 0) {
+      fetchComments();
+    }
+  }, [commentsExpanded]);
+
+  const fetchComments = async () => {
+    setIsLoadingComments(true);
+    try {
+      const response = await api.get(`/forums/${forum.id}`);
+      setComments(response.data.comments);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      console.error("Error fetching comments:", err);
+    } finally {
+      setIsLoadingComments(false);
+    }
+  };
+
   const handleEditForum = async (
     forumId: string,
     forumData: { title: string; description: string; tags: string[] }
@@ -49,6 +86,7 @@ const ForumCard = ({ forum, onForumUpdate, onForumDelete }: ForumCardProps) => {
       const response = await api.put(`/forums/${forumId}`, forumData);
       onForumUpdate(response.data);
       setShowEditModal(false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error("Error updating forum:", err);
       alert(err.response?.data?.message || "Failed to update forum");
@@ -60,11 +98,16 @@ const ForumCard = ({ forum, onForumUpdate, onForumDelete }: ForumCardProps) => {
       try {
         await api.delete(`/forums/${forum.id}`);
         onForumDelete(forum.id);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         console.error("Error deleting forum:", err);
         alert(err.response?.data?.message || "Failed to delete forum");
       }
     }
+  };
+
+  const toggleComments = () => {
+    setCommentsExpanded(!commentsExpanded);
   };
 
   return (
@@ -154,13 +197,48 @@ const ForumCard = ({ forum, onForumUpdate, onForumDelete }: ForumCardProps) => {
 
           <div className="flex items-center space-x-4">
             <span>{timeAgo}</span>
-            <span>
-              {commentCount} comment
-              {commentCount !== 1 ? "s" : ""}
-            </span>
+            <button
+              onClick={toggleComments}
+              className="flex items-center hover:text-indigo-600 focus:outline-none"
+            >
+              <span>
+                {commentCount} comment{commentCount !== 1 ? "s" : ""}
+              </span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className={`h-4 w-4 ml-1 transform transition-transform ${
+                  commentsExpanded ? "rotate-180" : ""
+                }`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
+
+      {isLoadingComments && commentsExpanded ? (
+        <div className="px-6 pb-6 pt-2 border-t border-gray-200">
+          <div className="flex justify-center items-center py-4">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
+          </div>
+        </div>
+      ) : (
+        <CommentSection
+          forumId={forum.id}
+          initialComments={comments}
+          expanded={commentsExpanded}
+          onToggle={toggleComments}
+        />
+      )}
 
       {showEditModal && (
         <EditForumModal
